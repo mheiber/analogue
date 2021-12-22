@@ -1,13 +1,28 @@
 use analogue::*;
-use nannou::prelude::*;
+use nannou::{prelude::*, rand};
 
 fn main() {
     nannou::sketch(view).run();
 }
 
+fn noise() -> Signal {
+    Signal(Box::new(|t| {
+        let n = (t.0 * 100.0) as u32;
+        if n % 15 == 0 {
+            rand::random_range(-0.00, 0.01)
+        } else if n % 13 == 0 {
+            rand::random_range(-0.01, 0.05)
+        } else if n % 26 == 0 {
+            rand::random_range(-0.4, 0.5)
+        } else {
+            0.0
+        }
+    }))
+}
+
 fn view(app: &App, frame: Frame) {
     let t = TimeSecs(app.time);
-    let square = square_wave(FrequencyHz(1)).scale(100.0);
+    let square = (square_wave(FrequencyHz(1)) + noise()).scale(100.0);
     let sine = sine_wave(FrequencyHz(1)).scale(100.0);
 
     let win = app.window_rect();
