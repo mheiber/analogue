@@ -17,6 +17,10 @@ ________________________________________________________________________________
 
 Rust translation of [paulcadman/analog](https://github.com/paulcadman/analog)
 
+## visualize
+
+`cargo run`
+
 ## build
 
 `cargo build`

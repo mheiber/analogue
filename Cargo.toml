@@ -10,4 +10,6 @@ proptest = "1.0.0"
 
 [dependencies]
 custom_derive = "0.1.7"
+nannou = "0.18.1"
 newtype_derive = "0.1.6"
+
