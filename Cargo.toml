@@ -11,5 +11,6 @@ proptest = "1.0.0"
 [dependencies]
 custom_derive = "0.1.7"
 nannou = "0.18.1"
+nannou_audio = "0.18.0"
 newtype_derive = "0.1.6"
 

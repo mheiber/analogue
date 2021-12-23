@@ -17,9 +17,9 @@ ________________________________________________________________________________
 
 Rust translation of [paulcadman/analog](https://github.com/paulcadman/analog)
 
-## visualize
+## visualize and hear
 
-`cargo run`
+`cargo run # headphone warning`
 
 ## build
 

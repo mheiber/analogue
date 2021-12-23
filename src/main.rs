@@ -1,15 +1,75 @@
+/// adapted from https://github.com/nannou-org/nannou/blob/8ebb398/examples/audio/simple_audio.rs
+/// and https://github.com/nannou-org/nannou/blob/7f996a2/examples/draw/draw_mesh.rs
 use analogue::*;
 use nannou::prelude::*;
+use nannou_audio as audio;
 
-fn main() {
-    nannou::sketch(view).run();
+struct Model {
+    _stream: audio::Stream<AudioModel>,
+    square: Signal,
+    sine: Signal,
+    combined: Signal,
 }
 
-fn view(app: &App, frame: Frame) {
+struct AudioModel {
+    phase: f64,
+    hz: f64,
+    combined: Signal,
+}
+
+fn main() {
+    nannou::app(model).view(view).run();
+}
+
+fn model(app: &App) -> Model {
+    app.new_window().build().unwrap();
+    let hz = FrequencyHz(1);
+    let sine = sine_wave(hz);
+    let square = square_wave(hz);
+    let combined = sine.clone() + square.clone();
+
+    let audio_host = audio::Host::new();
+
+    let audio_model = AudioModel {
+        phase: 0.0,
+        hz: hz.0 as f64 * 440.0, // scaled to middle A for easy listening
+        combined: combined.clone(),
+    };
+
+    // can be used for pause, play, etc. All is silent when the stream is `drop`ped
+    let _stream = audio_host
+        .new_output_stream(audio_model)
+        .render(audio)
+        .build()
+        .unwrap();
+
+    Model {
+        _stream,
+        sine,
+        square,
+        combined,
+    }
+}
+
+fn audio(audio: &mut AudioModel, buffer: &mut audio::Buffer) {
+    let sample_rate = buffer.sample_rate() as f64;
+    let volume = 0.5;
+    for frame in buffer.frames_mut() {
+        let amp = audio.combined.at(TimeSecs(audio.phase as f32));
+        audio.phase += audio.hz / sample_rate;
+        audio.phase %= sample_rate;
+        for channel in frame {
+            *channel = amp * volume;
+        }
+    }
+}
+
+fn view(app: &App, model: &Model, frame: Frame) {
     let t = TimeSecs(app.time);
-    let square = square_wave(FrequencyHz(1)).scale(100.0);
-    let sine = sine_wave(FrequencyHz(1)).scale(100.0);
-    let combined = square.clone() + sine.clone();
+    let scale = 100.0;
+    let square = model.square.clone().scale(scale);
+    let sine = model.sine.clone().scale(scale);
+    let combined = model.combined.clone().scale(scale);
 
     let win = app.window_rect();
     let draw = app.draw();
