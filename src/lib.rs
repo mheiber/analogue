@@ -1,5 +1,6 @@
 use std::f32::consts::PI;
 use std::fmt::Debug;
+use std::sync::Arc;
 #[macro_use]
 extern crate custom_derive;
 #[macro_use]
@@ -15,7 +16,14 @@ custom_derive! {
     pub struct FrequencyHz(pub u32);
 }
 
-pub struct Signal(pub Box<dyn Fn(TimeSecs) -> f32>);
+#[derive(Clone)]
+pub struct Signal {
+    f: Arc<dyn Fn(TimeSecs) -> f32 + Send + Sync + 'static>,
+    /// used for .phase()
+    add_input: f32,
+    /// used for .scale()
+    mul_output: f32,
+}
 
 impl Debug for Signal {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -23,31 +31,40 @@ impl Debug for Signal {
     }
 }
 
-impl From<u32> for TimeSecs {
-    fn from(n: u32) -> Self {
-        Self(n as f32)
-    }
-}
-
 impl std::ops::Add for Signal {
     type Output = Self;
     fn add(self, rhs: Self) -> Self::Output {
         let f = move |t: TimeSecs| {
-            let r1 = self.0(t);
-            let r2 = rhs.0(t);
+            let r1 = self.at(t);
+            let r2 = rhs.at(t);
             r1 + r2
         };
-        Self(Box::new(f))
+        Self::new(Arc::new(f))
     }
 }
 
 impl Signal {
+    pub fn new(f: Arc<dyn Fn(TimeSecs) -> f32 + Send + Sync + 'static>) -> Self {
+        Self {
+            f,
+            add_input: 0.0,
+            mul_output: 1.0,
+        }
+    }
     pub fn scale(self, by: f32) -> Signal {
-        let f = move |t| by * self.0(t);
-        Signal(Box::new(f))
+        Self {
+            mul_output: self.mul_output * by,
+            ..self
+        }
+    }
+    pub fn phase(self, by: f32) -> Signal {
+        Self {
+            add_input: self.add_input + by,
+            ..self
+        }
     }
     pub fn at(&self, time: TimeSecs) -> f32 {
-        self.0(time)
+        (self.f)(time + TimeSecs(self.add_input)) * self.mul_output
     }
 }
 
@@ -57,13 +74,13 @@ impl FrequencyHz {
     }
 
     pub fn period(self) -> TimeSecs {
-        TimeSecs(1.0) / self.0.into()
+        TimeSecs(1.0) / TimeSecs(self.0 as f32)
     }
 }
 
 pub fn sine_wave(freq: FrequencyHz) -> Signal {
     let f = move |t| (2.0 * PI * freq.at(t)).sin();
-    Signal(Box::new(f))
+    Signal::new(Arc::new(f))
 }
 
 pub fn square_wave(freq: FrequencyHz) -> Signal {
@@ -75,14 +92,14 @@ pub fn square_wave(freq: FrequencyHz) -> Signal {
             1.0
         }
     };
-    Signal(Box::new(f))
+    Signal::new(Arc::new(f))
 }
 
 pub fn sample(rate: FrequencyHz, s: Signal) -> impl Iterator<Item = f32> {
     (0..).map(move |n: u32| {
         let sample_period = rate.period();
         let t = (n as f32).powf(sample_period.0);
-        s.0(TimeSecs(t))
+        s.at(TimeSecs(t))
     })
 }
 
