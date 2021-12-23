@@ -4,9 +4,15 @@ mod tests {
     use proptest::prelude::*;
     prop_compose! {
         fn arb_frequency()(n in any::<u32>()) -> FrequencyHz {
-            FrequencyHz::new(n)
+            FrequencyHz(n)
         }
+    }
 
+    prop_compose! {
+        fn arb_signal()(amplitude in any::<f32>()) -> Signal {
+            let f = move |_| amplitude;
+            Signal(Box::new(f))
+        }
     }
 
     fn approx_eq(lhs: f32, rhs: f32) -> bool {
@@ -28,23 +34,23 @@ mod tests {
         // SKIP! failing now, not sure why
         // #[test]
         // fn test_sine_f_n_fth_is_0(freq in arb_frequency(), n in any::<f32>()) {
-        //     prop_assume!(freq > FrequencyHz::new(0));
-        //     let t = freq.period() * TimeSecs::new(n);
+        //     prop_assume!(freq > FrequencyHz(0));
+        //     let t = freq.period() * TimeSecs(n);
         //     let res = sine_wave(freq).at(t);
         //     prop_assert_approx_eq!(res, 0.0);
         // }
 
         #[test]
         fn test_sine_f_1_4th_is_1(freq in arb_frequency()) {
-            prop_assume!(freq > FrequencyHz::new(0));
-            let t = freq.period() * TimeSecs::new(0.25);
+            prop_assume!(freq > FrequencyHz(0));
+            let t = freq.period() * TimeSecs(0.25);
             prop_assert_approx_eq!(sine_wave(freq).at(t), 1.0);
         }
 
         #[test]
         fn test_sine_f_3_4th_is_neg_1(freq in arb_frequency()) {
-            prop_assume!(freq > FrequencyHz::new(0));
-            let t = TimeSecs::new(0.75) * freq.period();
+            prop_assume!(freq > FrequencyHz(0));
+            let t = TimeSecs(0.75) * freq.period();
             prop_assert_approx_eq!(sine_wave(freq).at(t), -1.0);
         }
 
