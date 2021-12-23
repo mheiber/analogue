@@ -38,5 +38,5 @@ jobs:
     - name: Run default features
       uses: actions-rs/cargo@v1
       with:
-        command: test --verbose
+        command: test
 
