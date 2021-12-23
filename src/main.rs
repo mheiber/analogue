@@ -1,7 +1,7 @@
+use analogue::{sine_wave, square_wave, FrequencyHz, Signal, TimeSecs};
 /// adapted from https://github.com/nannou-org/nannou/blob/8ebb398/examples/audio/simple_audio.rs
 /// and https://github.com/nannou-org/nannou/blob/7f996a2/examples/draw/draw_mesh.rs
-use analogue::*;
-use nannou::prelude::*;
+use nannou::prelude as n;
 use nannou_audio as audio;
 
 struct Model {
@@ -21,7 +21,7 @@ fn main() {
     nannou::app(model).view(view).run();
 }
 
-fn model(app: &App) -> Model {
+fn model(app: &n::App) -> Model {
     app.new_window().build().unwrap();
     let hz = FrequencyHz(1);
     let sine = sine_wave(hz);
@@ -64,7 +64,7 @@ fn audio(audio: &mut AudioModel, buffer: &mut audio::Buffer) {
     }
 }
 
-fn view(app: &App, model: &Model, frame: Frame) {
+fn view(app: &n::App, model: &Model, frame: n::Frame) {
     let t = TimeSecs(app.time);
     let scale = 100.0;
     let square = model.square.clone().scale(scale);
@@ -73,7 +73,7 @@ fn view(app: &App, model: &Model, frame: Frame) {
 
     let win = app.window_rect();
     let draw = app.draw();
-    draw.background().color(BLACK);
+    draw.background().color(n::BLACK);
 
     let half = win.w() / 2.0;
     let range = 1..win.w() as u32;
@@ -82,15 +82,15 @@ fn view(app: &App, model: &Model, frame: Frame) {
         let x = (right as f32) - half;
         (time, x)
     });
-    let plot = |signal: Signal, vert_shift: f32, color: rgb::Srgb<u8>| {
+    let plot = |signal: Signal, vert_shift: f32, color: n::rgb::Srgb<u8>| {
         let colored_pts = time_and_x.clone().map(|(time, x)| {
             let amp = signal.at(time) + vert_shift;
-            (pt2(x, amp), color)
+            (n::pt2(x, amp), color)
         });
         draw.polyline().weight(3.0).points_colored(colored_pts);
     };
-    plot(sine, 0.0, BLUE);
-    plot(square, 250.0, WHITE);
-    plot(combined.scale(0.5), -250.0, GREEN);
+    plot(sine, 0.0, n::BLUE);
+    plot(square, 250.0, n::WHITE);
+    plot(combined.scale(0.5), -250.0, n::GREEN);
     draw.to_frame(app, &frame).unwrap();
 }
