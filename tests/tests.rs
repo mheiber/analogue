@@ -1,5 +1,7 @@
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
+
     use analogue::*;
     use proptest::prelude::*;
     prop_compose! {
@@ -11,7 +13,7 @@ mod tests {
     prop_compose! {
         fn arb_signal()(amplitude in any::<f32>()) -> Signal {
             let f = move |_| amplitude;
-            Signal(Box::new(f))
+            Signal::new(Arc::new(f))
         }
     }
 
@@ -48,6 +50,13 @@ mod tests {
         }
 
         #[test]
+        fn test_sine_phase_and_scale(freq in arb_frequency()) {
+            prop_assume!(freq > FrequencyHz(0));
+            let t = freq.period() * TimeSecs(0.25);
+            let signal = sine_wave(freq).scale(2.0).phase(2.0 * t.0);
+            prop_assert_approx_eq!(signal.at(t), -2.0);
+        }
+        #[test]
         fn test_sine_f_3_4th_is_neg_1(freq in arb_frequency()) {
             prop_assume!(freq > FrequencyHz(0));
             let t = TimeSecs(0.75) * freq.period();
@@ -70,7 +79,7 @@ mod tests {
 
         #[test]
         fn square_f_0_is_neg_1(freq in arb_frequency()) {
-            prop_assert_approx_eq!(square_wave(freq).at(0.into()), -1.0);
+            prop_assert_approx_eq!(square_wave(freq).at(TimeSecs(0.0)), -1.0);
         }
     }
 }
