@@ -7,33 +7,15 @@ extern crate newtype_derive;
 
 custom_derive! {
     #[derive(Debug, PartialEq, Clone, PartialOrd, Copy, Default, NewtypeFrom, NewtypeAdd, NewtypeSub, NewtypeMul, NewtypeDiv)]
-    pub struct TimeSecs(f32);
-}
-
-impl TimeSecs {
-    pub fn new(val: f32) -> Self {
-        Self(val)
-    }
+    pub struct TimeSecs(pub f32);
 }
 
 custom_derive! {
     #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Default, NewtypeFrom, NewtypeAdd, NewtypeSub, NewtypeMul, NewtypeDiv)]
-    pub struct FrequencyHz(u32);
+    pub struct FrequencyHz(pub u32);
 }
 
-impl FrequencyHz {
-    pub fn new(val: u32) -> Self {
-        Self(val)
-    }
-}
-
-impl From<FrequencyHz> for f32 {
-    fn from(hz: FrequencyHz) -> Self {
-        hz.0 as f32
-    }
-}
-
-pub struct Signal(Box<dyn Fn(TimeSecs) -> f32>);
+pub struct Signal(pub Box<dyn Fn(TimeSecs) -> f32>);
 
 impl Debug for Signal {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -67,9 +49,6 @@ impl Signal {
     pub fn at(&self, time: TimeSecs) -> f32 {
         self.0(time)
     }
-    pub fn new(f: Box<dyn Fn(TimeSecs) -> f32>) -> Self {
-        Self(f)
-    }
 }
 
 impl FrequencyHz {
@@ -78,7 +57,7 @@ impl FrequencyHz {
     }
 
     pub fn period(self) -> TimeSecs {
-        TimeSecs::new(1.0) / self.0.into()
+        TimeSecs(1.0) / self.0.into()
     }
 }
 
@@ -107,11 +86,12 @@ pub fn sample(rate: FrequencyHz, s: Signal) -> impl Iterator<Item = f32> {
     })
 }
 
-pub struct Weight(u32);
+// stuff below this line is currently unused
+pub struct Weight(pub u32);
 
 custom_derive! {
     #[derive(Debug, PartialEq, PartialOrd, Clone, Copy, NewtypeAdd, NewtypeSub, NewtypeDiv, NewtypeMul, NewtypeFrom)]
-    pub struct Connection(f32);
+    pub struct Connection(pub f32);
 }
 
 pub fn weighted_sum(ws: Vec<Weight>, cs: Vec<Connection>) -> f32 {

@@ -1,14 +1,14 @@
 use analogue::*;
-use nannou::{draw::properties::ColorScalar, prelude::*};
+use nannou::prelude::*;
 
 fn main() {
     nannou::sketch(view).run();
 }
 
 fn view(app: &App, frame: Frame) {
-    let t = TimeSecs::new(app.time);
-    let square = square_wave(FrequencyHz::new(1)).scale(100.0);
-    let sine = sine_wave(FrequencyHz::new(1)).scale(100.0);
+    let t = TimeSecs(app.time);
+    let square = square_wave(FrequencyHz(1)).scale(100.0);
+    let sine = sine_wave(FrequencyHz(1)).scale(100.0);
 
     let win = app.window_rect();
     let draw = app.draw();
@@ -17,7 +17,7 @@ fn view(app: &App, frame: Frame) {
     let half = win.w() / 2.0;
     let range = 1..win.w() as u32;
     let time_and_x = range.map(|right| {
-        let time = t + TimeSecs::new(right as f32 / 100.0);
+        let time = t + TimeSecs(right as f32 / 100.0);
         let x = (right as f32) - half;
         (time, x)
     });
