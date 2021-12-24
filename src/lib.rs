@@ -1,4 +1,4 @@
-use std::f32::consts::PI;
+use std::f64::consts::PI;
 use std::fmt::Debug;
 use std::sync::Arc;
 #[macro_use]
@@ -8,7 +8,7 @@ extern crate newtype_derive;
 
 custom_derive! {
     #[derive(Debug, PartialEq, Clone, PartialOrd, Copy, Default, NewtypeFrom, NewtypeAdd, NewtypeSub, NewtypeMul, NewtypeDiv)]
-    pub struct TimeSecs(pub f32);
+    pub struct TimeSecs(pub f64);
 }
 
 custom_derive! {
@@ -18,11 +18,11 @@ custom_derive! {
 
 #[derive(Clone)]
 pub struct Signal {
-    f: Arc<dyn Fn(TimeSecs) -> f32 + Send + Sync + 'static>,
+    f: Arc<dyn Fn(TimeSecs) -> f64 + Send + Sync + 'static>,
     /// used for .phase()
-    add_input: f32,
+    add_input: f64,
     /// used for .scale()
-    mul_output: f32,
+    mul_output: f64,
 }
 
 impl Debug for Signal {
@@ -44,37 +44,37 @@ impl std::ops::Add for Signal {
 }
 
 impl Signal {
-    pub fn new(f: Arc<dyn Fn(TimeSecs) -> f32 + Send + Sync + 'static>) -> Self {
+    pub fn new(f: Arc<dyn Fn(TimeSecs) -> f64 + Send + Sync + 'static>) -> Self {
         Self {
             f,
             add_input: 0.0,
             mul_output: 1.0,
         }
     }
-    pub fn scale(self, by: f32) -> Signal {
+    pub fn scale(self, by: f64) -> Signal {
         Self {
             mul_output: self.mul_output * by,
             ..self
         }
     }
-    pub fn phase(self, by: f32) -> Signal {
+    pub fn phase(self, by: f64) -> Signal {
         Self {
             add_input: self.add_input + by,
             ..self
         }
     }
-    pub fn at(&self, time: TimeSecs) -> f32 {
+    pub fn at(&self, time: TimeSecs) -> f64 {
         (self.f)(time + TimeSecs(self.add_input)) * self.mul_output
     }
 }
 
 impl FrequencyHz {
-    pub fn at(self, t: TimeSecs) -> f32 {
-        (self.0 as f32) * t.0
+    pub fn at(self, t: TimeSecs) -> f64 {
+        (self.0 as f64) * t.0
     }
 
     pub fn period(self) -> TimeSecs {
-        TimeSecs(1.0) / TimeSecs(self.0 as f32)
+        TimeSecs(1.0) / TimeSecs(self.0 as f64)
     }
 }
 
@@ -95,10 +95,10 @@ pub fn square_wave(freq: FrequencyHz) -> Signal {
     Signal::new(Arc::new(f))
 }
 
-pub fn sample(rate: FrequencyHz, s: Signal) -> impl Iterator<Item = f32> {
+pub fn sample(rate: FrequencyHz, s: Signal) -> impl Iterator<Item = f64> {
     (0..).map(move |n: u32| {
         let sample_period = rate.period();
-        let t = (n as f32).powf(sample_period.0);
+        let t = (n as f64) * (sample_period.0);
         s.at(TimeSecs(t))
     })
 }
@@ -108,12 +108,12 @@ pub struct Weight(pub u32);
 
 custom_derive! {
     #[derive(Debug, PartialEq, PartialOrd, Clone, Copy, NewtypeAdd, NewtypeSub, NewtypeDiv, NewtypeMul, NewtypeFrom)]
-    pub struct Connection(pub f32);
+    pub struct Connection(pub f64);
 }
 
-pub fn weighted_sum(ws: Vec<Weight>, cs: Vec<Connection>) -> f32 {
+pub fn weighted_sum(ws: Vec<Weight>, cs: Vec<Connection>) -> f64 {
     assert_eq!(ws.len(), cs.len());
-    ws.iter().zip(cs).map(|(w, c)| (w.0 as f32) * c.0).sum()
+    ws.iter().zip(cs).map(|(w, c)| (w.0 as f64) * c.0).sum()
 }
 
 pub fn run_weights(ws: Vec<Weight>, cs: Vec<Connection>) -> Connection {
