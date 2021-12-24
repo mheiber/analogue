@@ -51,16 +51,16 @@ impl Signal {
             mul_output: 1.0,
         }
     }
-    pub fn scale(self, by: f64) -> Signal {
+    pub fn scale(&self, by: f64) -> Signal {
         Self {
             mul_output: self.mul_output * by,
-            ..self
+            ..self.clone()
         }
     }
-    pub fn phase(self, by: f64) -> Signal {
+    pub fn phase(&self, by: f64) -> Signal {
         Self {
             add_input: self.add_input + by,
-            ..self
+            ..self.clone()
         }
     }
     pub fn at(&self, time: TimeSecs) -> f64 {
@@ -98,7 +98,7 @@ pub fn square_wave(freq: FrequencyHz) -> Signal {
 pub fn sample(rate: FrequencyHz, s: Signal) -> impl Iterator<Item = f64> {
     (0..).map(move |n: u32| {
         let sample_period = rate.period();
-        let t = (n as f64) * (sample_period.0);
+        let t = n as f64 * sample_period.0;
         s.at(TimeSecs(t))
     })
 }

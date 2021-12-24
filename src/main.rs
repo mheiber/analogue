@@ -6,8 +6,7 @@ use nannou_audio as audio;
 
 struct Model {
     _stream: audio::Stream<AudioModel>,
-    square: Signal,
-    sine: Signal,
+    signals: Vec<Signal>,
     combined: Signal,
 }
 
@@ -43,10 +42,11 @@ fn model(app: &n::App) -> Model {
         .build()
         .unwrap();
 
+    let signals = vec![square, sine];
+
     Model {
         _stream,
-        sine,
-        square,
+        signals,
         combined,
     }
 }
@@ -55,11 +55,11 @@ fn audio(audio: &mut AudioModel, buffer: &mut audio::Buffer) {
     let sample_rate = buffer.sample_rate() as f64;
     let volume = 0.5;
     for frame in buffer.frames_mut() {
-        let amp = audio.combined.at(TimeSecs(audio.phase as f64));
+        let amp = audio.combined.at(TimeSecs(audio.phase));
         audio.phase += audio.hz / sample_rate;
         audio.phase %= sample_rate;
         for channel in frame {
-            *channel = (amp as f32) * volume;
+            *channel = (amp * volume) as f32;
         }
     }
 }
@@ -67,15 +67,18 @@ fn audio(audio: &mut AudioModel, buffer: &mut audio::Buffer) {
 fn view(app: &n::App, model: &Model, frame: n::Frame) {
     let t = TimeSecs(app.time as f64);
     let scale = 100.0;
-    let square = model.square.clone().scale(scale);
-    let sine = model.sine.clone().scale(scale);
-    let combined = model.combined.clone().scale(scale);
+    let combined = model.combined.scale(0.5);
+    let signals = model
+        .signals
+        .iter()
+        .chain(std::iter::once(&combined))
+        .map(|s| s.scale(scale));
 
     let win = app.window_rect();
     let draw = app.draw();
     draw.background().color(n::BLACK);
 
-    let half = win.w() as f64 / 2.0;
+    let half = (win.w() as f64) / 2.0;
     let range = 1..win.w() as u32;
     let time_and_x = range.map(|right| {
         let time = t + TimeSecs(right as f64 / 100.0);
@@ -89,8 +92,12 @@ fn view(app: &n::App, model: &Model, frame: n::Frame) {
         });
         draw.polyline().weight(3.0).points_colored(colored_pts);
     };
-    plot(sine, 0.0, n::BLUE);
-    plot(square, 250.0, n::WHITE);
-    plot(combined.scale(0.5), -250.0, n::GREEN);
+    let half_h = (win.h() / 2.0) as i32;
+    let step = (win.h() / (model.signals.len() + 1) as f32) as usize;
+    let vert_shifts = (-half_h..half_h).step_by(step).map(|y| y + 125).rev();
+
+    for (vert_shift, signal) in vert_shifts.zip(signals) {
+        plot(signal, vert_shift as f64, n::BLUE);
+    }
     draw.to_frame(app, &frame).unwrap();
 }
