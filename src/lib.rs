@@ -20,6 +20,8 @@ custom_derive! {
 #[derive(Clone)]
 pub struct Signal {
     f: Arc<dyn Fn(TimeSecs) -> f64 + Send + Sync + 'static>,
+    /// used for increasing frequency
+    mul_input: f64,
     /// used for .phase()
     add_input: f64,
     /// used for .scale()
@@ -28,6 +30,7 @@ pub struct Signal {
 
 impl Debug for Signal {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("signal").unwrap();
         f.write_str("signal")
     }
 }
@@ -53,6 +56,7 @@ impl Signal {
     pub fn new(f: Arc<dyn Fn(TimeSecs) -> f64 + Send + Sync + 'static>) -> Self {
         Self {
             f,
+            mul_input: 1.0,
             add_input: 0.0,
             mul_output: 1.0,
         }
@@ -63,6 +67,12 @@ impl Signal {
             ..self.clone()
         }
     }
+    pub fn incr_frequency(&self, by: f64) -> Signal {
+        Self {
+            mul_input: self.mul_input * by,
+            ..self.clone()
+        }
+    }
     pub fn phase(&self, by: f64) -> Signal {
         Self {
             add_input: self.add_input + by,
@@ -70,7 +80,7 @@ impl Signal {
         }
     }
     pub fn at(&self, time: TimeSecs) -> f64 {
-        (self.f)(time + TimeSecs(self.add_input)) * self.mul_output
+        (self.f)(TimeSecs(self.mul_input * time.0 + self.add_input)) * self.mul_output
     }
 }
 
