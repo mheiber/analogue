@@ -1,10 +1,11 @@
-use std::f64::consts::PI;
 use std::fmt::Debug;
 use std::sync::Arc;
 #[macro_use]
 extern crate custom_derive;
 #[macro_use]
 extern crate newtype_derive;
+
+pub mod standard_signals;
 
 custom_derive! {
     #[derive(Debug, PartialEq, Clone, PartialOrd, Copy, Default, NewtypeFrom, NewtypeAdd, NewtypeSub, NewtypeMul, NewtypeDiv)]
@@ -81,23 +82,6 @@ impl FrequencyHz {
     pub fn period(self) -> TimeSecs {
         TimeSecs(1.0) / TimeSecs(self.0 as f64)
     }
-}
-
-pub fn sine_wave(freq: FrequencyHz) -> Signal {
-    let f = move |t| (2.0 * PI * freq.at(t)).sin();
-    Signal::new(Arc::new(f))
-}
-
-pub fn square_wave(freq: FrequencyHz) -> Signal {
-    let f = move |t: TimeSecs| {
-        let is_even = (freq.at(t).round() as u32) % 2 == 0;
-        if is_even {
-            -1.0
-        } else {
-            1.0
-        }
-    };
-    Signal::new(Arc::new(f))
 }
 
 pub fn sample(rate: FrequencyHz, s: Signal) -> impl Iterator<Item = f64> {

@@ -1,9 +1,12 @@
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
-
-    use analogue::*;
+    use analogue::{
+        sample,
+        standard_signals::{sine_wave, square_wave},
+        FrequencyHz, Signal, TimeSecs,
+    };
     use proptest::prelude::*;
+    use std::sync::Arc;
     prop_compose! {
         fn arb_frequency()(n in any::<u32>()) -> FrequencyHz {
             FrequencyHz(n)

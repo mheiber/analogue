@@ -1,4 +1,7 @@
-use analogue::{sine_wave, square_wave, FrequencyHz, Signal, TimeSecs};
+use analogue::{
+    standard_signals::{sine_wave, square_wave},
+    FrequencyHz, Signal, TimeSecs,
+};
 /// adapted from https://github.com/nannou-org/nannou/blob/8ebb398/examples/audio/simple_audio.rs
 /// and https://github.com/nannou-org/nannou/blob/7f996a2/examples/draw/draw_mesh.rs
 use nannou::prelude as n;
