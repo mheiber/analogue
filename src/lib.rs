@@ -107,21 +107,3 @@ pub fn sample(rate: FrequencyHz, s: Signal) -> impl Iterator<Item = f64> {
         s.at(TimeSecs(t))
     })
 }
-
-// stuff below this line is currently unused
-pub struct Weight(pub u32);
-
-custom_derive! {
-    #[derive(Debug, PartialEq, PartialOrd, Clone, Copy, NewtypeAdd, NewtypeSub, NewtypeDiv, NewtypeMul, NewtypeFrom)]
-    pub struct Connection(pub f64);
-}
-
-pub fn weighted_sum(ws: Vec<Weight>, cs: Vec<Connection>) -> f64 {
-    assert_eq!(ws.len(), cs.len());
-    ws.iter().zip(cs).map(|(w, c)| (w.0 as f64) * c.0).sum()
-}
-
-pub fn run_weights(ws: Vec<Weight>, cs: Vec<Connection>) -> Connection {
-    let negated_cs = cs.iter().map(|c| Connection(-c.0));
-    Connection(weighted_sum(ws, negated_cs.collect()))
-}
