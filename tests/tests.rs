@@ -11,14 +11,14 @@ mod tests {
     }
 
     prop_compose! {
-        fn arb_signal()(amplitude in any::<f32>()) -> Signal {
+        fn arb_signal()(amplitude in any::<f64>()) -> Signal {
             let f = move |_| amplitude;
             Signal::new(Arc::new(f))
         }
     }
 
-    fn approx_eq(lhs: f32, rhs: f32) -> bool {
-        (lhs - rhs).abs() <= 0.75 //1.0f32.powf(-8.0)
+    fn approx_eq(lhs: f64, rhs: f64) -> bool {
+        (lhs - rhs).abs() <= 1e-5
     }
 
     macro_rules! prop_assert_approx_eq {
@@ -33,9 +33,9 @@ mod tests {
     }
 
     proptest! {
-        // SKIP! failing now, not sure why
+        // Skip failing test for now
         // #[test]
-        // fn test_sine_f_n_fth_is_0(freq in arb_frequency(), n in any::<f32>()) {
+        // fn test_sine_f_n_fth_is_0(freq in arb_frequency(), n in any::<f64>()) {
         //     prop_assume!(freq > FrequencyHz(0));
         //     let t = freq.period() * TimeSecs(n);
         //     let res = sine_wave(freq).at(t);
@@ -80,6 +80,17 @@ mod tests {
         #[test]
         fn square_f_0_is_neg_1(freq in arb_frequency()) {
             prop_assert_approx_eq!(square_wave(freq).at(TimeSecs(0.0)), -1.0);
+        }
+
+      #[test]
+        fn sample_sine_phase_is_periodic(f in arb_frequency(), phase in any::<f64>()) {
+            prop_assume!(f > FrequencyHz(0));
+            prop_assume!(phase >= 0.0);
+            let wave = sine_wave(f).phase(1.0);
+            let expected = wave.at(TimeSecs(0.0));
+            for v in sample(f, wave).take(10) {
+                prop_assert_approx_eq!(v, expected);
+            }
         }
     }
 }

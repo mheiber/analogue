@@ -55,17 +55,17 @@ fn audio(audio: &mut AudioModel, buffer: &mut audio::Buffer) {
     let sample_rate = buffer.sample_rate() as f64;
     let volume = 0.5;
     for frame in buffer.frames_mut() {
-        let amp = audio.combined.at(TimeSecs(audio.phase as f32));
+        let amp = audio.combined.at(TimeSecs(audio.phase as f64));
         audio.phase += audio.hz / sample_rate;
         audio.phase %= sample_rate;
         for channel in frame {
-            *channel = amp * volume;
+            *channel = (amp as f32) * volume;
         }
     }
 }
 
 fn view(app: &n::App, model: &Model, frame: n::Frame) {
-    let t = TimeSecs(app.time);
+    let t = TimeSecs(app.time as f64);
     let scale = 100.0;
     let square = model.square.clone().scale(scale);
     let sine = model.sine.clone().scale(scale);
@@ -75,17 +75,17 @@ fn view(app: &n::App, model: &Model, frame: n::Frame) {
     let draw = app.draw();
     draw.background().color(n::BLACK);
 
-    let half = win.w() / 2.0;
+    let half = win.w() as f64 / 2.0;
     let range = 1..win.w() as u32;
     let time_and_x = range.map(|right| {
-        let time = t + TimeSecs(right as f32 / 100.0);
-        let x = (right as f32) - half;
+        let time = t + TimeSecs(right as f64 / 100.0);
+        let x = (right as f64) - half;
         (time, x)
     });
-    let plot = |signal: Signal, vert_shift: f32, color: n::rgb::Srgb<u8>| {
+    let plot = |signal: Signal, vert_shift: f64, color: n::rgb::Srgb<u8>| {
         let colored_pts = time_and_x.clone().map(|(time, x)| {
             let amp = signal.at(time) + vert_shift;
-            (n::pt2(x, amp), color)
+            (n::pt2(x as f32, amp as f32), color)
         });
         draw.polyline().weight(3.0).points_colored(colored_pts);
     };
