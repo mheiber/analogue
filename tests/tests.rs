@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use analogue::{
-        sample,
+        noise::sample,
         standard_signals::{sine_wave, square_wave},
         FrequencyHz, Signal, TimeSecs,
     };
