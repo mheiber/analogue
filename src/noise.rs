@@ -20,14 +20,6 @@ pub fn rms(s: Signal, period: TimeSecs) -> f64 {
     let samples = 100;
     let rate = FrequencyHz(((samples as f64) / period.0) as u32);
 
-    // The fold function is derived from:
-    //
-    // let a_1, ... a_n be the items of the iterator.
-    //
-    // mean_n = (1/n) * \sum_{i=1}^n a_i
-    //        = (1/n) * ( (n - 1) * mean_{n - 1} + a_n )
-    //        = mean_{n - 1} + (a_n - mean_{n - 1}) / n
-    //
     sample(rate, s)
         .map(|x| x.powf(2.0))
         .enumerate()
