@@ -10,6 +10,8 @@ pub fn sample(rate: FrequencyHz, s: Signal) -> impl Iterator<Item = f64> {
 
 /// Estimates the root mean square (RMS) of a signal over a period
 ///
+/// https://en.wikipedia.org/wiki/Root_mean_square
+///
 /// # Arguments
 ///
 /// * `s` - The `Signal` used to compute the RMS
