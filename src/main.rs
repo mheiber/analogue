@@ -16,6 +16,7 @@ struct Model {
     shift_key_is_down: bool,
     ctrl_key_is_down: bool,
     view_y: f32,
+    view_t: f32,
 }
 
 enum ModeKind {
@@ -73,6 +74,7 @@ impl Default for Model {
             ctrl_key_is_down: Default::default(),
             edit_state: Default::default(),
             view_y: Default::default(),
+            view_t: Default::default(),
         }
     }
 }
@@ -126,19 +128,21 @@ fn event(_app: &n::App, model: &mut Model, event: n::WindowEvent) {
     }
     let shift = &mut model.shift_key_is_down;
     let ctrl = &mut model.ctrl_key_is_down;
-    let gentle = if *ctrl { 0.1 } else { 1.0 };
+    let gentle: f64 = if *ctrl { 0.1 } else { 1.0 };
     match &model.mode_kind {
         ModeKind::Edit => match event {
+            KeyPressed(H) if *shift => model.view_t -= 30.0 * gentle as f32,
             KeyPressed(H) => model.phase(-0.2 * gentle),
+            KeyPressed(L) if *shift => model.view_t += 30.0 * gentle as f32,
             KeyPressed(L) => model.phase(0.2 * gentle),
             KeyPressed(U) if *shift => model.scale(1.0 + 0.25 * gentle),
             KeyPressed(D) if *shift => model.scale(1.0 / (1.0 + 0.25 * gentle)),
             KeyPressed(U) => model.incr_frequency(1.0 + 0.25 * gentle),
             KeyPressed(D) => model.incr_frequency(1.0 / (1.0 + 0.25 * gentle)),
 
-            KeyPressed(J) if *shift => model.view_y -= 10.0,
+            KeyPressed(J) if *shift => model.view_y -= 20.0 * gentle as f32,
             KeyPressed(J) => model.incr_selection(1),
-            KeyPressed(K) if *shift => model.view_y += 10.0,
+            KeyPressed(K) if *shift => model.view_y += 20.0 * gentle as f32,
             KeyPressed(K) => model.incr_selection(-1),
             KeyPressed(X) => model.remove_signal(),
             KeyPressed(O) => model.goto_add_mode(),
@@ -185,7 +189,7 @@ fn view(app: &n::App, model: &Model, frame: n::Frame) {
 }
 
 fn view_edit_signals(app: &n::App, model: &Model, frame: n::Frame) {
-    let t = TimeSecs(app.time as f64);
+    let t = TimeSecs((app.time + model.view_t) as f64);
     let selection = model.edit_state.selection;
     let scale = 100.0 + selection as f64 * 5.0;
     let combined = model.combined.scale(0.5);
