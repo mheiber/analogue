@@ -106,4 +106,3 @@ impl FrequencyHz {
         TimeSecs(1.0) / TimeSecs(self.0 as f64)
     }
 }
-
