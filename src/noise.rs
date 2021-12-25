@@ -1,4 +1,6 @@
 use crate::{FrequencyHz, Signal, TimeSecs};
+use rand::distributions::{Distribution, Normal};
+use std::sync::Arc;
 
 pub fn sample(rate: FrequencyHz, s: Signal) -> impl Iterator<Item = f64> {
     (0..).map(move |n: u32| {
@@ -30,4 +32,23 @@ pub fn rms(s: Signal, period: TimeSecs) -> f64 {
             running_mean + (a - running_mean) / ((n as i32 + 1) as f64)
         })
         .sqrt()
+}
+
+/// Applies Gaussian white noise to a Signal at the specified signal to noise ratio.
+///
+/// The function uses the Additive Gaussian white noise model
+/// https://en.wikipedia.org/wiki/Additive_white_Gaussian_noise
+///
+/// # Arguments
+///
+/// * `s` - The base Signal to apply noise to.
+/// * `signal_to_noise` - The desired signal to noise ratio for the returned signal.
+/// * `sample_duration` - A period to analyse the base Signal (should be around one period of the signal)
+pub fn gaussian_white_noise(s: Signal, signal_to_noise: f64, sample_duration: TimeSecs) -> Signal {
+    let rms_signal = rms(s.clone(), sample_duration);
+    let rms_noise = (rms_signal.powf(2.0) / (10.0f64.powf(signal_to_noise / 10.0))).sqrt();
+    let dist = Normal::new(0.0, rms_noise.powf(2.0));
+    let noise = move |_| dist.sample(&mut rand::thread_rng());
+    let noise_signal = Signal::new(Arc::new(noise));
+    s.clone() + noise_signal
 }

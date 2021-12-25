@@ -13,4 +13,4 @@ custom_derive = "0.1.7"
 nannou = "0.18.1"
 nannou_audio = "0.18.0"
 newtype_derive = "0.1.6"
-
+rand = "0.6.5"

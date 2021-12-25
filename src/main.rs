@@ -1,3 +1,4 @@
+use analogue::noise::gaussian_white_noise;
 use analogue::{FrequencyHz, Signal, TimeSecs};
 mod standard_signals;
 use standard_signals::{sine_wave, square_wave};
@@ -91,6 +92,12 @@ impl Model {
         let len = self.signals.len() as i32;
         self.edit_state.selection = (selection + amt).rem_euclid(len) as usize;
     }
+    fn add_white_noise(&mut self) {
+        let selection = self.edit_state.selection;
+        // Choice of 8.0 for signal to noise ratio is arbitrary aethetic judgment..
+        self.signals[selection] =
+            gaussian_white_noise(self.signals[selection].clone(), 8.0, TimeSecs(1.0));
+    }
     fn push_signal_and_goto_edit_mode(&mut self, signal: Signal) {
         self.signals.push(signal);
         self.mode_kind = ModeKind::Edit;
@@ -133,6 +140,7 @@ fn event(_app: &n::App, model: &mut Model, event: n::WindowEvent) {
             KeyPressed(D) if *shift => model.scale(1.0 / (1.0 + 0.25 * gentle)),
             KeyPressed(U) => model.incr_frequency(1.0 + 0.25 * gentle),
             KeyPressed(D) => model.incr_frequency(1.0 / (1.0 + 0.25 * gentle)),
+            KeyPressed(N) => model.add_white_noise(),
 
             KeyPressed(J) if *shift => model.view_y -= 20.0 * gentle as f32,
             KeyPressed(J) => model.incr_selection(1),
@@ -245,6 +253,8 @@ fn view_add_signal(app: &n::App, _model: &Model, frame: n::Frame) {
             u and d: adjust phrequency
 
             U and D: adjust amplitude
+
+            n: Add white noise
 
             j and k: select component wave (yellow)
 
