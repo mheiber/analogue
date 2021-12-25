@@ -28,6 +28,18 @@ pub struct Signal {
     mul_output: f64,
 }
 
+impl Default for Signal {
+    fn default() -> Self {
+        let f = Arc::new(|_| 0.0);
+        Self {
+            f,
+            mul_input: Default::default(),
+            add_input: Default::default(),
+            mul_output: Default::default(),
+        }
+    }
+}
+
 impl Debug for Signal {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str("signal").unwrap();
