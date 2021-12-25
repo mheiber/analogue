@@ -26,8 +26,8 @@ pub fn rms(s: Signal, period: TimeSecs) -> f64 {
         .map(|x| x.powf(2.0))
         .enumerate()
         .take(samples)
-        .fold(0.0 as f64, |m, (n, x)| {
-            m + (x - m) / ((n as i32 + 1) as f64)
+        .fold(0.0 as f64, |running_mean, (n, a)| {
+            running_mean + (a - running_mean) / ((n as i32 + 1) as f64)
         })
         .sqrt()
 }
