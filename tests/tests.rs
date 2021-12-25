@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use analogue::{
-        sample,
+        noise::{rms, sample},
         standard_signals::{sine_wave, square_wave},
         FrequencyHz, Signal, TimeSecs,
     };
@@ -14,25 +14,57 @@ mod tests {
     }
 
     prop_compose! {
+        fn arb_timesecs()(t in any::<f64>()) -> TimeSecs {
+            TimeSecs(t)
+        }
+    }
+
+    prop_compose! {
         fn arb_signal()(amplitude in any::<f64>()) -> Signal {
             let f = move |_| amplitude;
             Signal::new(Arc::new(f))
         }
     }
 
-    fn approx_eq(lhs: f64, rhs: f64) -> bool {
-        (lhs - rhs).abs() <= 1e-5
+    fn approx_eq(lhs: f64, rhs: f64, tolerance: f64) -> bool {
+        (lhs - rhs).abs() <= tolerance
     }
 
     macro_rules! prop_assert_approx_eq {
         ($actual:expr, $expected: expr) => {
+            prop_assert_approx_eq!($actual, $expected, 1e-5)
+        };
+        ($actual:expr, $expected: expr, $tolerance: expr) => {
             prop_assert!(
-                approx_eq($actual, $expected),
+                approx_eq($actual, $expected, $tolerance),
                 "expected {} ~= {}",
                 $actual,
                 $expected
             )
         };
+    }
+
+    macro_rules! assert_approx_eq {
+        ($actual:expr, $expected: expr) => {
+            assert_approx_eq!($actual, $expected, 1e-5)
+        };
+        ($actual:expr, $expected: expr, $tolerance: expr) => {
+            assert!(
+                approx_eq($actual, $expected, $tolerance),
+                "expected {} ~= {}",
+                $actual,
+                $expected
+            )
+        };
+    }
+
+    // Make this into a property test (depends on making the number of samples dynamic).
+    #[test]
+    fn rms_sine_wave() {
+        let expected_rms = 0.5f64.sqrt();
+        for f in (1..100).map(FrequencyHz) {
+            assert_approx_eq!(rms(sine_wave(f), f.period()), expected_rms, 1e-3);
+        }
     }
 
     proptest! {
@@ -85,7 +117,7 @@ mod tests {
             prop_assert_approx_eq!(square_wave(freq).at(TimeSecs(0.0)), -1.0);
         }
 
-      #[test]
+        #[test]
         fn sample_sine_phase_is_periodic(f in arb_frequency(), phase in any::<f64>()) {
             prop_assume!(f > FrequencyHz(0));
             prop_assume!(phase >= 0.0);
@@ -94,6 +126,13 @@ mod tests {
             for v in sample(f, wave).take(10) {
                 prop_assert_approx_eq!(v, expected);
             }
+        }
+
+        #[test]
+        fn rms_square_wave(f in arb_frequency(), p in arb_timesecs()) {
+            prop_assume!(f > FrequencyHz(0));
+            prop_assume!(p > TimeSecs(0.0));
+            prop_assert_approx_eq!(rms(square_wave(f), p), 1.0);
         }
     }
 }
