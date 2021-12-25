@@ -46,20 +46,14 @@ fn model(app: &n::App) -> Model {
 
 impl Default for Model {
     fn default() -> Self {
-        let hz = FrequencyHz(1);
-        let signals = Vec::new();
-        let combined = Signal::sum(signals.clone());
-
-        let audio_host = audio::Host::new();
-
         let audio_model = AudioModel {
-            phase: 0.0,
-            hz: hz.0 as f64 * 440.0, // scaled to middle A for easy listening
-            combined: combined.clone(),
+            phase: Default::default(),
+            hz: 440.0, // scaled to middle A for easy listening
+            combined: Default::default(),
         };
 
         // can be used for pause, play, etc. All is silent when the stream is `drop`ped
-        let stream = audio_host
+        let stream = audio::Host::new()
             .new_output_stream(audio_model)
             .render(audio)
             .build()
@@ -67,8 +61,8 @@ impl Default for Model {
 
         Self {
             stream,
-            signals,
-            combined,
+            signals: Default::default(),
+            combined: Default::default(),
             mode_kind: ModeKind::AddSignal,
             shift_key_is_down: Default::default(),
             ctrl_key_is_down: Default::default(),
