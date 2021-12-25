@@ -20,14 +20,31 @@ mod tests {
         }
     }
 
-    fn approx_eq(lhs: f64, rhs: f64) -> bool {
-        (lhs - rhs).abs() <= 1e-5
+    fn approx_eq(lhs: f64, rhs: f64, tolerance: f64) -> bool {
+        (lhs - rhs).abs() <= tolerance
     }
 
     macro_rules! prop_assert_approx_eq {
         ($actual:expr, $expected: expr) => {
+            prop_assert_approx_eq!($actual, $expected, 1e-5)
+        };
+        ($actual:expr, $expected: expr, $tolerance: expr) => {
             prop_assert!(
-                approx_eq($actual, $expected),
+                approx_eq($actual, $expected, $tolerance),
+                "expected {} ~= {}",
+                $actual,
+                $expected
+            )
+        };
+    }
+
+    macro_rules! assert_approx_eq {
+        ($actual:expr, $expected: expr) => {
+            assert_approx_eq!($actual, $expected, 1e-5)
+        };
+        ($actual:expr, $expected: expr, $tolerance: expr) => {
+            assert!(
+                approx_eq($actual, $expected, $tolerance),
                 "expected {} ~= {}",
                 $actual,
                 $expected
