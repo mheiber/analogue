@@ -234,18 +234,27 @@ fn view_add_signal(app: &n::App, _model: &Model, frame: n::Frame) {
     draw.background().color(n::BLACK);
     draw.text(
         r#"
-        "Make a selection:
+        Make a selection:
         (1) add square wave
         (2) add sine wave
 
-        after that, experiment with keys:
-            h, j, k, and l
-            u and d
-            x and o
-            Hold Shift with another key
-            Hold Ctrl with another key
+        Then edit components of the light blue wave:
 
---Then press o to return to this menu--"#,
+            h and l: adjust phase
+
+            u and d: adjust phrequency
+
+            U and D: adjust amplitude
+
+            j and k: select component wave (yellow)
+
+            H, J, K, L: pan
+
+            o and x: add and remove
+
+            ctrl: gentle adjust
+
+--You can press o to return to this menu--"#,
     )
     .left_justify()
     .font_size(24)
