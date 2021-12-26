@@ -1,5 +1,4 @@
-use analogue::noise::gaussian_white_noise;
-use analogue::{FrequencyHz, Signal, TimeSecs};
+use analogue::{noise::gaussian_white_noise, FrequencyHz, Signal, TimeSecs};
 mod standard_signals;
 use standard_signals::{sine_wave, square_wave};
 
