@@ -46,8 +46,8 @@ pub fn rms(s: &Signal, period: TimeSecs) -> f64 {
 /// * `sample_duration` - A period to analyse the base Signal (should be around one period of the signal)
 pub fn gaussian_white_noise(s: Signal, signal_to_noise: f64, sample_duration: TimeSecs) -> Signal {
     let rms_signal = rms(&s, sample_duration);
-    let rms_noise = (rms_signal.powf(2.0) / (10.0f64.powf(signal_to_noise / 10.0))).sqrt();
-    let dist = Normal::new(0.0, rms_noise.powf(2.0));
+    let rms_noise_squared = rms_signal.powf(2.0) / (10.0f64.powf(signal_to_noise / 10.0));
+    let dist = Normal::new(0.0, rms_noise_squared);
     let noise = move |_| dist.sample(&mut rand::thread_rng());
     let noise_signal = Signal::new(Arc::new(noise));
     s.clone() + noise_signal
