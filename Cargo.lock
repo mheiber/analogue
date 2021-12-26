@@ -61,6 +61,7 @@ dependencies = [
  "nannou",
  "nannou_audio",
  "newtype_derive",
+ "ordered-float 2.8.0",
  "proptest",
  "rand 0.6.5",
 ]
@@ -1724,6 +1725,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ordered-float"
+version = "2.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "97c9d06878b3a851e8026ef94bf7fef9ba93062cd412601da4d9cf369b1cc62d"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
 name = "owned_ttf_parser"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2251,7 +2261,7 @@ dependencies = [
  "crossbeam-utils 0.7.2",
  "linked-hash-map",
  "num_cpus",
- "ordered-float",
+ "ordered-float 1.1.1",
  "rustc-hash",
  "stb_truetype",
 ]
