@@ -1,6 +1,5 @@
 use crate::{FrequencyHz, Signal, TimeSecs};
 use rand::distributions::{Distribution, Normal};
-use std::sync::Arc;
 
 pub fn sample<'s>(rate: FrequencyHz, s: &'s Signal) -> impl Iterator<Item = f64> + 's {
     (0..).map(move |n: u32| {
@@ -49,6 +48,6 @@ pub fn gaussian_white_noise(s: Signal, signal_to_noise: f64, sample_duration: Ti
     let rms_noise_squared = rms_signal.powf(2.0) / (10.0f64.powf(signal_to_noise / 10.0));
     let dist = Normal::new(0.0, rms_noise_squared);
     let noise = move |_| dist.sample(&mut rand::thread_rng());
-    let noise_signal = Signal::new(Arc::new(noise));
+    let noise_signal = Signal::new(noise);
     s.clone() + noise_signal
 }

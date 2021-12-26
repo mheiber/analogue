@@ -1,10 +1,9 @@
 use crate::{FrequencyHz, Signal, TimeSecs};
 use std::f64::consts::PI;
-use std::sync::Arc;
 
 pub fn sine_wave(freq: FrequencyHz) -> Signal {
     let f = move |t| (2.0 * PI * freq.at(t)).sin();
-    Signal::new(Arc::new(f))
+    Signal::new(f)
 }
 
 pub fn square_wave(freq: FrequencyHz) -> Signal {
@@ -16,5 +15,5 @@ pub fn square_wave(freq: FrequencyHz) -> Signal {
             1.0
         }
     };
-    Signal::new(Arc::new(f))
+    Signal::new(f)
 }

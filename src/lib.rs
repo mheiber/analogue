@@ -20,7 +20,7 @@ custom_derive! {
 
 #[derive(Clone)]
 pub struct Signal {
-    f: Arc<dyn Fn(TimeSecs) -> f64 + Send + Sync + 'static>,
+    f: Arc<dyn Fn(TimeSecs) -> f64 + Send + Sync>,
     /// used for increasing frequency
     mul_input: f64,
     /// used for .phase()
@@ -56,41 +56,35 @@ impl std::ops::Add for Signal {
             let r2 = rhs.at(t);
             r1 + r2
         };
-        Self::new(Arc::new(f))
+        Self::new(f)
     }
 }
 
 impl Signal {
     pub fn sum(signals: Vec<Signal>) -> Signal {
         let f = move |t: TimeSecs| -> f64 { signals.iter().map(|s| s.at(t)).sum() };
-        Self::new(Arc::new(f))
+        Self::new(f)
     }
 
-    pub fn new(f: Arc<dyn Fn(TimeSecs) -> f64 + Send + Sync + 'static>) -> Self {
+    pub fn new<F>(f: F) -> Self
+    where
+        F: Fn(TimeSecs) -> f64 + Send + Sync + 'static,
+    {
         Self {
-            f,
+            f: Arc::new(f),
             mul_input: 1.0,
             add_input: 0.0,
             mul_output: 1.0,
         }
     }
-    pub fn scale(&self, by: f64) -> Signal {
-        Self {
-            mul_output: self.mul_output * by,
-            ..self.clone()
-        }
+    pub fn scale(&mut self, by: f64) {
+        self.mul_output *= by;
     }
-    pub fn incr_frequency(&self, by: f64) -> Signal {
-        Self {
-            mul_input: self.mul_input * by,
-            ..self.clone()
-        }
+    pub fn incr_frequency(&mut self, by: f64) {
+        self.mul_input *= by;
     }
-    pub fn phase(&self, by: f64) -> Signal {
-        Self {
-            add_input: self.add_input + by,
-            ..self.clone()
-        }
+    pub fn phase(&mut self, by: f64) {
+        self.add_input += by;
     }
     pub fn at(&self, time: TimeSecs) -> f64 {
         (self.f)(TimeSecs(self.mul_input * time.0 + self.add_input)) * self.mul_output
