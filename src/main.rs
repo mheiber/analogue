@@ -74,17 +74,17 @@ impl Default for Model {
 }
 
 impl Model {
+    fn selected(&mut self) -> &mut Signal {
+        &mut self.signals[self.edit_state.selection]
+    }
     fn phase(&mut self, amt: f64) {
-        let selection = self.edit_state.selection;
-        self.signals[selection] = self.signals[selection].phase(amt);
+        self.selected().phase(amt);
     }
     fn scale(&mut self, amt: f64) {
-        let selection = self.edit_state.selection;
-        self.signals[selection] = self.signals[selection].scale(amt);
+        self.selected().scale(amt);
     }
     fn incr_frequency(&mut self, amt: f64) {
-        let selection = self.edit_state.selection;
-        self.signals[selection] = self.signals[selection].incr_frequency(amt);
+        self.selected().incr_frequency(amt);
     }
     fn incr_selection(&mut self, amt: i32) {
         let selection = self.edit_state.selection as i32;
@@ -192,13 +192,14 @@ fn view(app: &n::App, model: &Model, frame: n::Frame) {
 fn view_edit_signals(app: &n::App, model: &Model, frame: n::Frame) {
     let t = TimeSecs((app.time + model.view_t) as f64);
     let selection = model.edit_state.selection;
+    let mut combined = model.combined.clone();
+    combined.scale(0.5);
+    let mut signals = model.signals.clone();
+    signals.push(combined);
     let scale = 100.0 + selection as f64 * 5.0;
-    let combined = model.combined.scale(0.5);
-    let signals = model
-        .signals
-        .iter()
-        .chain(std::iter::once(&combined))
-        .map(|s| s.scale(scale));
+    for s in &mut signals {
+        s.scale(scale)
+    }
 
     let win = app.window_rect();
     let draw = app.draw();
