@@ -63,7 +63,7 @@ mod tests {
     fn rms_sine_wave() {
         let expected_rms = 0.5f64.sqrt();
         for f in (1..100).map(FrequencyHz) {
-            assert_approx_eq!(rms(sine_wave(f), f.period()), expected_rms, 1e-3);
+            assert_approx_eq!(rms(&sine_wave(f), f.period()), expected_rms, 1e-3);
         }
     }
 
@@ -100,14 +100,14 @@ mod tests {
 
         #[test]
         fn abs_sample_sine_lt_1(rate in arb_frequency(), freq in arb_frequency()) {
-            for v in sample(rate, sine_wave(freq)).take(100) {
+            for v in sample(rate, &sine_wave(freq)).take(100) {
                 prop_assert!(v.abs() <= 1.0);
             }
         }
 
         #[test]
         fn sample_square_1_or_neg_1(rate in arb_frequency(), freq in arb_frequency()) {
-            for v in sample(rate, square_wave(freq)).take(100) {
+            for v in sample(rate, &square_wave(freq)).take(100) {
                 prop_assert!(v.abs() == 1.0);
             }
         }
@@ -123,7 +123,7 @@ mod tests {
             prop_assume!(phase >= 0.0);
             let wave = sine_wave(f).phase(1.0);
             let expected = wave.at(TimeSecs(0.0));
-            for v in sample(f, wave).take(10) {
+            for v in sample(f, &wave).take(10) {
                 prop_assert_approx_eq!(v, expected);
             }
         }
@@ -132,7 +132,7 @@ mod tests {
         fn rms_square_wave(f in arb_frequency(), p in arb_timesecs()) {
             prop_assume!(f > FrequencyHz(0));
             prop_assume!(p > TimeSecs(0.0));
-            prop_assert_approx_eq!(rms(square_wave(f), p), 1.0);
+            prop_assert_approx_eq!(rms(&square_wave(f), p), 1.0);
         }
     }
 }
