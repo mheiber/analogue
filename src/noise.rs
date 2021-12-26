@@ -20,7 +20,7 @@ pub fn sample(rate: FrequencyHz, s: Signal) -> impl Iterator<Item = f64> {
 pub fn rms(s: Signal, period: TimeSecs) -> f64 {
     // The number of samples should depend on the period.
     let samples = 100;
-    let rate = FrequencyHz(((samples as f64) / period.0) as u32);
+    let rate = FrequencyHz(((samples as f64) / period.0) as u64);
 
     sample(rate, s)
         .map(|x| x.powf(2.0))

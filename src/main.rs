@@ -36,7 +36,15 @@ struct AudioModel {
 }
 
 fn main() {
-    nannou::app(model).view(view).run();
+    let wv = square_wave(FrequencyHz(0));
+    println!("{:?}", wv.clone());
+    println!("{:?}", wv.clone() + wv.clone());
+    // println!("{}", wv.at(TimeSecs(0.0)));
+    // println!("{}", sine_wave(FrequencyHz(0)).at(TimeSecs(0.25)));
+    // println!("{}", sine_wave(FrequencyHz(0)).at(TimeSecs(0.5)));
+    // println!("{}", sine_wave(FrequencyHz(0)).at(TimeSecs(0.75)));
+    // println!("{}", sine_wave(FrequencyHz(0)).at(TimeSecs(1.0)));
+    // nannou::app(model).view(view).run();
 }
 
 fn model(app: &n::App) -> Model {
@@ -74,17 +82,18 @@ impl Default for Model {
 }
 
 impl Model {
-    fn phase(&mut self, amt: f64) {
+    fn selected(&mut self) -> &mut Signal {
         let selection = self.edit_state.selection;
-        self.signals[selection] = self.signals[selection].phase(amt);
+        &mut self.signals[selection]
     }
-    fn scale(&mut self, amt: f64) {
-        let selection = self.edit_state.selection;
-        self.signals[selection] = self.signals[selection].scale(amt);
+    fn phase(&mut self, by: TimeSecs) {
+        self.selected().phase(by)
     }
-    fn incr_frequency(&mut self, amt: f64) {
-        let selection = self.edit_state.selection;
-        self.signals[selection] = self.signals[selection].incr_frequency(amt);
+    fn scale(&mut self, by: f64) {
+        self.selected().scale(by)
+    }
+    fn incr_frequency(&mut self, by: f64) {
+        self.selected().incr_frequency(by)
     }
     fn incr_selection(&mut self, amt: i32) {
         let selection = self.edit_state.selection as i32;
@@ -126,9 +135,9 @@ fn event(_app: &n::App, model: &mut Model, event: n::WindowEvent) {
     match &model.mode_kind {
         ModeKind::Edit => match event {
             KeyPressed(H) if *shift => model.view_t -= 30.0 * gentle as f32,
-            KeyPressed(H) => model.phase(-0.2 * gentle),
+            KeyPressed(H) => model.phase(TimeSecs(-0.2 * gentle)),
             KeyPressed(L) if *shift => model.view_t += 30.0 * gentle as f32,
-            KeyPressed(L) => model.phase(0.2 * gentle),
+            KeyPressed(L) => model.phase(TimeSecs(0.2 * gentle)),
             KeyPressed(U) if *shift => model.scale(1.0 + 0.25 * gentle),
             KeyPressed(D) if *shift => model.scale(1.0 / (1.0 + 0.25 * gentle)),
             KeyPressed(U) => model.incr_frequency(1.0 + 0.25 * gentle),
@@ -154,7 +163,9 @@ fn event(_app: &n::App, model: &mut Model, event: n::WindowEvent) {
             _ => (),
         },
     }
-    model.combined = Signal::sum(model.signals.clone());
+    println!("combining {} {:?}", model.signals.len(), model.signals);
+    model.combined = Signal::sum(&model.signals);
+    println!("h1 combined{:?}", model.combined);
     let combined = model.combined.clone();
     model
         .stream
@@ -186,12 +197,14 @@ fn view_edit_signals(app: &n::App, model: &Model, frame: n::Frame) {
     let t = TimeSecs((app.time + model.view_t) as f64);
     let selection = model.edit_state.selection;
     let scale = 100.0 + selection as f64 * 5.0;
-    let combined = model.combined.scale(0.5);
-    let signals = model
-        .signals
-        .iter()
-        .chain(std::iter::once(&combined))
-        .map(|s| s.scale(scale));
+    let mut combined = model.combined.clone();
+    combined.scale(0.5);
+    let mut signals = model.signals.clone();
+    for s in &mut signals {
+        s.scale(scale)
+    }
+
+    println!("here view {:?}", signals);
 
     let win = app.window_rect();
     let draw = app.draw();

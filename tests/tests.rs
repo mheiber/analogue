@@ -6,9 +6,8 @@ mod tests {
         FrequencyHz, Signal, TimeSecs,
     };
     use proptest::prelude::*;
-    use std::sync::Arc;
     prop_compose! {
-        fn arb_frequency()(n in any::<u32>()) -> FrequencyHz {
+        fn arb_frequency()(n in any::<u64>()) -> FrequencyHz {
             FrequencyHz(n)
         }
     }
@@ -16,13 +15,6 @@ mod tests {
     prop_compose! {
         fn arb_timesecs()(t in any::<f64>()) -> TimeSecs {
             TimeSecs(t)
-        }
-    }
-
-    prop_compose! {
-        fn arb_signal()(amplitude in any::<f64>()) -> Signal {
-            let f = move |_| amplitude;
-            Signal::new(Arc::new(f))
         }
     }
 
@@ -88,7 +80,9 @@ mod tests {
         fn test_sine_phase_and_scale(freq in arb_frequency()) {
             prop_assume!(freq > FrequencyHz(0));
             let t = freq.period() * TimeSecs(0.25);
-            let signal = sine_wave(freq).scale(2.0).phase(2.0 * t.0);
+            let mut signal = sine_wave(freq);
+            signal.scale(2.0);
+            signal.phase(TimeSecs(2.0 * t.0));
             prop_assert_approx_eq!(signal.at(t), -2.0);
         }
         #[test]
@@ -121,9 +115,10 @@ mod tests {
         fn sample_sine_phase_is_periodic(f in arb_frequency(), phase in any::<f64>()) {
             prop_assume!(f > FrequencyHz(0));
             prop_assume!(phase >= 0.0);
-            let wave = sine_wave(f).phase(1.0);
+            let mut wave = sine_wave(f);
+            wave.phase(TimeSecs(1.0));
             let expected = wave.at(TimeSecs(0.0));
-            for v in sample(f, wave).take(10) {
+            for v in sample(f, wave.clone()).take(10) {
                 prop_assert_approx_eq!(v, expected);
             }
         }

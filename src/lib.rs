@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use std::sync::Arc;
+
 #[macro_use]
 extern crate custom_derive;
 #[macro_use]
@@ -15,85 +15,114 @@ custom_derive! {
 
 custom_derive! {
     #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Default, NewtypeFrom, NewtypeAdd, NewtypeSub, NewtypeMul, NewtypeDiv)]
-    pub struct FrequencyHz(pub u32);
+    pub struct FrequencyHz(pub u64);
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Signal {
-    f: Arc<dyn Fn(TimeSecs) -> f64 + Send + Sync + 'static>,
-    /// used for increasing frequency
-    mul_input: f64,
-    /// used for .phase()
-    add_input: f64,
-    /// used for .scale()
-    mul_output: f64,
+    sample_rate: FrequencyHz,
+    period: TimeSecs,
+    samples: Vec<f64>,
+}
+
+impl std::ops::Mul<TimeSecs> for FrequencyHz {
+    type Output = u64;
+    fn mul(self, rhs: TimeSecs) -> Self::Output {
+        (self.0 as f64 * rhs.0) as u64
+    }
 }
 
 impl Default for Signal {
     fn default() -> Self {
-        let f = Arc::new(|_| 0.0);
         Self {
-            f,
-            mul_input: Default::default(),
-            add_input: Default::default(),
-            mul_output: Default::default(),
+            sample_rate: FrequencyHz(1),
+            period: TimeSecs(1.0),
+            samples: vec![0.0],
         }
-    }
-}
-
-impl Debug for Signal {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str("signal").unwrap();
-        f.write_str("signal")
     }
 }
 
 impl std::ops::Add for Signal {
     type Output = Self;
     fn add(self, rhs: Self) -> Self::Output {
-        let f = move |t: TimeSecs| {
-            let r1 = self.at(t);
-            let r2 = rhs.at(t);
-            r1 + r2
-        };
-        Self::new(Arc::new(f))
+        Signal::sum(&[self, rhs])
     }
 }
 
 impl Signal {
-    pub fn sum(signals: Vec<Signal>) -> Signal {
-        let f = move |t: TimeSecs| -> f64 { signals.iter().map(|s| s.at(t)).sum() };
-        Self::new(Arc::new(f))
+    pub fn new(samples: Vec<f64>, sample_rate: FrequencyHz, period: TimeSecs) -> Self {
+        let expected = sample_rate * period - 1;
+        if expected > samples.len() as u64 {
+            panic!("expected at least {} samples ({:?} * {:?} - 1) but got {}", expected, sample_rate, period, samples.len());
+        }
+        Self {
+            sample_rate,
+            period,
+            samples,
+        }
+    }
+    pub fn from_fn<F>(f: F, sample_rate: FrequencyHz, period: TimeSecs) -> Self
+    where
+        F: Fn(TimeSecs) -> f64,
+    {
+        let samples = (0..sample_rate * period)
+            .map(|t| TimeSecs(t as f64))
+            .map(f)
+            .collect();
+        Self {
+            samples,
+            sample_rate,
+            period,
+        }
     }
 
-    pub fn new(f: Arc<dyn Fn(TimeSecs) -> f64 + Send + Sync + 'static>) -> Self {
-        Self {
-            f,
-            mul_input: 1.0,
-            add_input: 0.0,
-            mul_output: 1.0,
+    pub fn sum(signals: &[Self]) -> Self {
+        if signals.is_empty() {
+            Default::default()
+        }
+        else {
+            let max_period =
+                signals
+                    .iter()
+                    .map(|s| s.period)
+                    .fold(TimeSecs(1.0), |max, period| if max >= period { max } else { period });
+            let max_sample_rate =
+                signals
+                    .iter()
+                    .map(|s| s.sample_rate).max().unwrap_or(FrequencyHz::default());
+
+            let f = |t| {
+                let vals = signals.iter().map(|s| s.at(t));
+                let v: Vec<_> = vals.clone().collect();
+                vals.sum()
+            };
+            Signal::from_fn(f, max_sample_rate, max_period)
         }
     }
-    pub fn scale(&self, by: f64) -> Signal {
-        Self {
-            mul_output: self.mul_output * by,
-            ..self.clone()
-        }
+
+    pub fn scale(&mut self, by: f64) {
+        self.samples = self.samples.iter().map(|amp| amp * by).collect();
     }
-    pub fn incr_frequency(&self, by: f64) -> Signal {
-        Self {
-            mul_input: self.mul_input * by,
-            ..self.clone()
-        }
+    pub fn incr_frequency(&mut self, by: f64) {
+        self.period = TimeSecs(self.period.0 / by);
+        self.sample_rate = FrequencyHz((self.sample_rate.0 as f64 / by) as u64);
     }
-    pub fn phase(&self, by: f64) -> Signal {
-        Self {
-            add_input: self.add_input + by,
-            ..self.clone()
-        }
+    pub fn phase(&mut self, by: TimeSecs) {
+        let pivot = (self.sample_rate * by).rem_euclid(self.samples.len() as u64) as usize ;
+
+        let mut v = Vec::with_capacity(self.samples.len());
+        v.extend(self.samples[pivot..].to_vec());
+        v.extend(self.samples[0..pivot].to_vec());
+        self.samples = v;
     }
     pub fn at(&self, time: TimeSecs) -> f64 {
-        (self.f)(TimeSecs(self.mul_input * time.0 + self.add_input)) * self.mul_output
+        self.samples[self.index_for(time)]
+    }
+    fn index_for(&self, time: TimeSecs) -> usize {
+        let index = (self.sample_rate * TimeSecs(time.0.rem_euclid(self.period.0)));
+        // TODO: think on this more
+        // modulo again to avoid off-by-one errors
+        index.rem_euclid(self.samples.len() as u64) as usize
     }
 }
 
