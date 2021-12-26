@@ -2,7 +2,7 @@ use crate::{FrequencyHz, Signal, TimeSecs};
 use rand::distributions::{Distribution, Normal};
 use std::sync::Arc;
 
-pub fn sample<'s>(rate: FrequencyHz, s: &'s Signal) -> impl Iterator<Item = f64> + 's{
+pub fn sample<'s>(rate: FrequencyHz, s: &'s Signal) -> impl Iterator<Item = f64> + 's {
     (0..).map(move |n: u32| {
         let sample_period = rate.period();
         let t = n as f64 * sample_period.0;
