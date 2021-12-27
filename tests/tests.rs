@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use analogue::{
-        noise::{rms, sample},
+        noise::{gaussian_white_noise, rms, sample},
         standard_signals::{sine_wave, square_wave},
         FrequencyHz, Signal, TimeSecs,
     };
@@ -136,6 +136,15 @@ mod tests {
             prop_assume!(f > FrequencyHz(0));
             prop_assume!(p > TimeSecs(0.0));
             prop_assert_approx_eq!(rms(&square_wave(f), p), 1.0);
+        }
+
+        #[test]
+        fn gaussian_white_noise_deterministic(f in arb_frequency(), t in arb_timesecs()) {
+            prop_assume!(f > FrequencyHz(0));
+            let s = gaussian_white_noise(square_wave(f), 10.0, TimeSecs(1.0));
+            let test_values = (0..100).map(|_| s.at(t));
+            prop_assert_eq!(test_values.clone().fold(f64::NEG_INFINITY, f64::max),
+                            test_values.clone().fold(f64::INFINITY, f64::min));
         }
     }
 }
