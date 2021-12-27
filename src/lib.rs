@@ -1,9 +1,7 @@
+use custom_derive::custom_derive;
+use newtype_derive::*;
 use std::fmt::Debug;
 use std::sync::Arc;
-#[macro_use]
-extern crate custom_derive;
-#[macro_use]
-extern crate newtype_derive;
 
 pub mod noise;
 pub mod standard_signals;
