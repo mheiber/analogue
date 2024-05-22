@@ -2,7 +2,8 @@
 
 # analogue
 
-Rust translation of [paulcadman/analog](https://github.com/paulcadman/analog)
+Batteries-included musical synthesizer inspired by tide machines with fun visuals and vim bindings.
+
 
 ## visualize 🎧 and hear 👀
 
@@ -12,6 +13,7 @@ clone this repo and run from source with:
 `cargo run`
 
 Or download a release from ./releases, unarchive the file, then run it.
+You'll start off in an instruction screen and of course there are vim bindings.
 
 > watch out: sound and movement
 
